@@ -2,7 +2,7 @@
 # Deploys a job that (re)applies the semantic-layer SQL in numbered order
 # against the SQL warehouse. Validate on every PR; deploy from main.
 #
-# Fill in: workspace host, sql warehouse id (Small Serverless), and the
+# Fill in: 
 # run_as service principal once one is provisioned for CI (until then,
 # deploys run as the developer).
 
@@ -12,18 +12,18 @@ bundle:
 variables:
   warehouse_id:
     description: SQL warehouse id (the Small Serverless warehouse)
-    default: "REPLACE_ME"
+    default: "02726a0a46ad773a"
 
 targets:
   dev:
     mode: development
     default: true
     workspace:
-      host: https://REPLACE_ME.azuredatabricks.net
+      host: https://adb-1234567890123456.7.azuredatabricks.net
   prod:
     mode: production
     workspace:
-      host: https://REPLACE_ME.azuredatabricks.net
+      host: https://adb-1234567890123456.7.azuredatabricks.net
     # run_as:
     #   service_principal_name: "REPLACE_ME_CI_SP_APPLICATION_ID"
 

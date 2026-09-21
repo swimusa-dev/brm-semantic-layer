@@ -1,4 +1,3 @@
-# MOVE THIS FILE to .github/workflows/ci.yml before pushing (remote tools cannot write workflow files directly).
 name: bundle-validate
 on:
   pull_request:
