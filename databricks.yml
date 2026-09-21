@@ -1,0 +1,81 @@
+# Databricks Asset Bundle for the BRM semantic layer.
+# Deploys a job that (re)applies the semantic-layer SQL in numbered order
+# against the SQL warehouse. Validate on every PR; deploy from main.
+#
+# Fill in: workspace host, sql warehouse id (Small Serverless), and the
+# run_as service principal once one is provisioned for CI (until then,
+# deploys run as the developer).
+
+bundle:
+  name: brm-semantic-layer
+
+variables:
+  warehouse_id:
+    description: SQL warehouse id (the Small Serverless warehouse)
+    default: "REPLACE_ME"
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://REPLACE_ME.azuredatabricks.net
+  prod:
+    mode: production
+    workspace:
+      host: https://REPLACE_ME.azuredatabricks.net
+    # run_as:
+    #   service_principal_name: "REPLACE_ME_CI_SP_APPLICATION_ID"
+
+resources:
+  jobs:
+    brm_semantic_deploy:
+      name: "BRM semantic layer deploy"
+      description: >
+        Applies the semantic-layer SQL in order. gold_metadata scripts are
+        re-runnable and repair Koantek redeploy wipes; semantic scripts
+        CREATE OR REPLACE the four certified metric views. Identity
+        (brm_21/22) and ownership (brm_34) scripts are deliberately NOT in
+        this job: they follow their embedded runbooks, run by a human.
+      tasks:
+        - task_key: comments
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/gold_metadata/brm_12_comments.sql
+        - task_key: comment_patches
+          depends_on: [{ task_key: comments }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/gold_metadata/brm_14_comment_patch.sql
+        - task_key: new_column_comments
+          depends_on: [{ task_key: comment_patches }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/gold_metadata/brm_15_new_column_comments.sql
+        - task_key: tags
+          depends_on: [{ task_key: new_column_comments }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/gold_metadata/brm_13_tags.sql
+        - task_key: mv_brand
+          depends_on: [{ task_key: tags }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/semantic/brm_31_mv_brm_brand.sql
+        - task_key: mv_staffing_people
+          depends_on: [{ task_key: mv_brand }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/semantic/brm_32_mv_staffing_people.sql
+        - task_key: mv_customers
+          depends_on: [{ task_key: mv_staffing_people }]
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: sql/semantic/brm_33_mv_brm_customers.sql

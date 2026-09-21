@@ -1,0 +1,21 @@
+# MOVE THIS FILE to .github/workflows/ci.yml before pushing (remote tools cannot write workflow files directly).
+name: bundle-validate
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Validate bundle
+        run: databricks bundle validate
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      # Deploy step deliberately omitted until the CI service principal
+      # exists (task 2.4 / Phase 8). Until then: deploy from a laptop with
+      # `databricks bundle deploy -t dev`.
